@@ -92,6 +92,12 @@ function App() {
     return s.charAt(0).toUpperCase() + s.slice(1);
   }, [target]);
 
+  // Derive a readable font size for cell numbers based on board size
+  const cellFontPx = useMemo(() => {
+    // Larger font for smaller boards; clamp to keep within readable bounds
+    return Math.max(12, Math.round(44 - size * 3)); // 3x3 ~35px, 9x9 ~17px
+  }, [size]);
+
   // Submit final score exactly once when time transitions from >0 to 0
   useEffect(() => {
     if (remainingMs == null) return;
@@ -191,13 +197,19 @@ function App() {
       {roundId && <p className="meta">Round ID: {roundId}</p>}
 
       {/* If grid is still empty, show a loading message */}
-      {grid.length === 0 ? (
-        <p>Loading round...</p>
-      ) : (
-        <div className="grid" style={{ gridTemplateColumns: `repeat(${size}, 1fr)` }}>
-          {grid.map((row, r) =>
-            row.map((colour, c) => {
-              const key = `${r}-${c}`;
+          {grid.length === 0 ? (
+            <p>Loading round...</p>
+          ) : (
+            <div
+              className="grid"
+              style={{
+                gridTemplateColumns: `repeat(${size}, 1fr)`,
+                "--cell-font-size": `${cellFontPx}px`,
+              }}
+            >
+              {grid.map((row, r) =>
+                row.map((colour, c) => {
+                  const key = `${r}-${c}`;
               const flashClass = (flash && flash.key === key) ? (flash.type === 'correct' ? 'flash-correct' : 'flash-wrong') : '';
               return (
                 <button

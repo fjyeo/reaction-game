@@ -97,7 +97,7 @@ function App() {
                   console.log(`Clicked ${colour} at row ${r}, col ${c}`)
                 }
               >
-                {colour}
+                {r + 1}
               </button>
             ))
           )}

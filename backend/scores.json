@@ -1,5 +1,11 @@
 [
   {
+    "id": "0848762fd33e45dbbe947908b8d8b2f5",
+    "name": "Freddie",
+    "score": 47,
+    "timestamp": "2025-10-16T19:27:21.029118+00:00"
+  },
+  {
     "id": "2fd8013d657d47b9aa40ba93761712e0",
     "name": "Player",
     "score": 46,
@@ -22,11 +28,5 @@
     "name": "Player",
     "score": 5,
     "timestamp": "2025-10-16T15:52:02.830395+00:00"
-  },
-  {
-    "id": "120403c31e2c4421b363b95d691ced3d",
-    "name": "Player",
-    "score": 0,
-    "timestamp": "2025-10-16T15:47:58.024939+00:00"
   }
 ]

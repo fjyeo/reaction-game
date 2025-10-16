@@ -13,6 +13,8 @@ function App() {
   const [highscores, setHighscores] = useState([]);
   const hasTimeBeenPositiveRef = useRef(false);
   const [size, setSize] = useState(3);
+  const [playerName, setPlayerName] = useState("");
+  const [flash, setFlash] = useState(null);
 
   // fetch a round from backend
   const fetchRound = (preserveExpiry = true) => {
@@ -126,44 +128,57 @@ function App() {
 
   return (
     <main className="app">
-      <h1>Reaction Game</h1>
+      <div className="layout">
+        <section>
+          <div className="header">
+            <h1>Reaction Game</h1>
+            <div className="controls">
+              <label>
+                Name:
+                <input
+                  type="text"
+                  value={playerName}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setPlayerName(v);
+                    localStorage.setItem("rg_player_name", v);
+                  }}
+                  placeholder="Player"
+                />
+              </label>
+              <label>
+                Size:
+                <select
+                  value={size}
+                  onChange={(e) => setSize(parseInt(e.target.value, 10))}
+                >
+                  {[3, 4, 5, 6, 7, 8, 9].map((n) => (
+                    <option key={n} value={n}>
+                      {n}x{n}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="new-round"
+                onClick={() => {
+                  setScore(0);
+                  setSubmitted(false);
+                  hasTimeBeenPositiveRef.current = false;
+                  fetchRound(false);
+                  fetchHighscores();
+                }}
+              >
+                New Round
+              </button>
+            </div>
+          </div>
 
-      {/* Countdown timer */}
-      {remainingLabel && <p className="timer">Time left: {remainingLabel}</p>}
-      {remainingMs === 0 && <p className="timesup">Time's up!</p>}
+          {/* Countdown + Score */}
+          {remainingLabel && <p className="timer">Time left: {remainingLabel}</p>}
+          {remainingMs === 0 && <p className="timesup">Time's up!</p>}
 
-      {/* Actions */}
-      <p>
-        <button
-          className="new-round"
-          onClick={() => {
-            // Always start a fresh game on New Round:
-            // reset score and get a new expiry/timebox
-            setScore(0);
-            setSubmitted(false);
-            hasTimeBeenPositiveRef.current = false;
-            fetchRound(false);
-            fetchHighscores();
-          }}
-        >
-          New Round
-        </button>
-      </p>
-
-      {/* Board size selector */}
-      <p>
-        Size:
-        <select
-          value={size}
-          onChange={(e) => setSize(parseInt(e.target.value, 10))}
-        >
-          {[3, 4, 5, 6, 7, 8, 9].map((n) => (
-            <option key={n} value={n}>
-              {n}×{n}
-            </option>
-          ))}
-        </select>
-      </p>
+      
 
       {/* Prompt and metadata */}
       {target && (
@@ -172,57 +187,66 @@ function App() {
       {/* Score */}
       <p className="score">Score: {score}</p>
 
-      {/* Highscores (always visible) */}
-      <div className="highscores">
-        <h2>High Scores</h2>
-        <ol>
-          {highscores.map((e) => (
-            <li key={e.id}>
-              {e.name} - {e.score}
-            </li>
-          ))}
-        </ol>
-      </div>
+      {/* Highscores moved to sidebar */}
       {roundId && <p className="meta">Round ID: {roundId}</p>}
 
       {/* If grid is still empty, show a loading message */}
       {grid.length === 0 ? (
         <p>Loading round...</p>
       ) : (
-        <div
-          className="grid"
-          style={{
-            gridTemplateColumns: `repeat(${size}, 100px)`,
-            gridTemplateRows: `repeat(${size}, 100px)`,
-          }}
-        >
+        <div className="grid" style={{ gridTemplateColumns: `repeat(${size}, 1fr)` }}>
           {grid.map((row, r) =>
-            row.map((colour, c) => (
-              <button
-                key={`${r}-${c}`}
-                className="cell"
-                style={{ backgroundColor: colour }}
-                disabled={remainingMs === 0}
-                onClick={() => {
-                  console.log(`Clicked ${colour} at row ${r}, col ${c}`);
-                  // If time remains and target matches, increment score and fetch next round
-                  if (remainingMs > 0 && target && r === target.row && colour === target.colour) {
-                    setScore((s) => s + 1);
-                    fetchRound(true); // keep original expiry
-                  }
-                }}
-              >
-                {r + 1}
-              </button>
-            ))
+            row.map((colour, c) => {
+              const key = `${r}-${c}`;
+              const flashClass = (flash && flash.key === key) ? (flash.type === 'correct' ? 'flash-correct' : 'flash-wrong') : '';
+              return (
+                <button
+                  key={key}
+                  className={`cell ${flashClass}`}
+                  style={{ backgroundColor: colour }}
+                  disabled={remainingMs === 0}
+                  onClick={() => {
+                    console.log(`Clicked ${colour} at row ${r}, col ${c}`);
+                    if (remainingMs > 0 && target) {
+                      const isCorrect = r === target.row && colour === target.colour;
+                      setFlash({ key, type: isCorrect ? 'correct' : 'wrong' });
+                      setTimeout(() => setFlash(null), 200);
+                      if (isCorrect) {
+                        setScore((s) => s + 1);
+                        fetchRound(true);
+                      }
+                    }
+                  }}
+                >
+                  {r + 1}
+                </button>
+              );
+            })
           )}
         </div>
       )}
+        </section>
+        <aside className="sidebar">
+          <h2>High Scores</h2>
+          {highscores.length === 0 ? (
+            <p>No scores yet.</p>
+          ) : (
+            <ol>
+              {highscores.map((e) => (
+                <li key={e.id}>
+                  {e.name} - {e.score}
+                </li>
+              ))}
+            </ol>
+          )}
+        </aside>
+      </div>
     </main>
   );
 }
 
 export default App;
+
 
 
 

@@ -89,3 +89,21 @@ Next Steps
 
     Add unit tests for colour generation logic
 
+Additional Endpoint
+
+GET /round
+
+Returns a full round payload that includes a grid, a randomly selected target cell, a unique roundId, and an expiresAt timestamp (ISO 8601, UTC). The default expiry is 60 seconds from the time of request.
+
+Example response:
+
+{
+  "roundId": "b2a1c0d9e8f74f1a90e1a2b3c4d5e6f7",
+  "expiresAt": "2025-01-01T12:00:00+00:00",
+  "grid": [
+    ["red", "green", "blue"],
+    ["blue", "red", "green"],
+    ["green", "blue", "red"]
+  ],
+  "target": {"row": 1, "col": 2, "colour": "green"}
+}

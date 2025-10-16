@@ -9,8 +9,8 @@ function App() {
   const [expiresAt, setExpiresAt] = useState(null);
   const [remainingMs, setRemainingMs] = useState(null);
 
-  // fetch the round from backend on mount
-  useEffect(() => {
+  // fetch a round from backend
+  const fetchRound = () => {
     fetch("http://127.0.0.1:8000/round")
       .then((res) => res.json())
       .then((data) => {
@@ -21,6 +21,11 @@ function App() {
         setExpiresAt(data.expiresAt || null);
       })
       .catch((err) => console.error("Failed to fetch round:", err));
+  };
+
+  // fetch on mount
+  useEffect(() => {
+    fetchRound();
   }, []);
 
   // countdown: derive remaining time from expiresAt
@@ -62,6 +67,12 @@ function App() {
 
       {/* Countdown timer */}
       {remainingLabel && <p className="timer">Time left: {remainingLabel}</p>}
+      {remainingMs === 0 && <p className="timesup">Time's up!</p>}
+
+      {/* Actions */}
+      <p>
+        <button className="new-round" onClick={fetchRound}>New Round</button>
+      </p>
 
       {/* Prompt and metadata */}
       {target && (

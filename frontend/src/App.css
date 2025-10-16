@@ -57,13 +57,21 @@
 
 .hud {
   display: flex;
-  gap: 16px;
-  align-items: center;
+  flex-direction: column; /* allow a progress bar below */
+  gap: 10px;
+  align-items: stretch;
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--panel-2);
   margin-top: 10px; /* add a little space from header */
+}
+
+.hud-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .timer {
@@ -99,6 +107,30 @@
   margin-top: 12px; /* breathing room from prompt */
   display: flex;
   justify-content: center; /* center the grid inside the panel */
+}
+
+/* Progress bar inside HUD */
+.progress {
+  position: relative;
+  height: 8px;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  background: #ef4444; /* red */
+}
+
+@keyframes progress-deplete {
+  from { width: 100%; }
+  to { width: 0%; }
 }
 
 .cell {

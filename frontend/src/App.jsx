@@ -237,8 +237,11 @@ function App() {
           </div>
 
           {/* Countdown + Score */}
-          {remainingLabel && <p className="timer">Time left: {remainingLabel}</p>}
-          {remainingMs === 0 && <p className="timesup">Time's up!</p>}
+          <div className="hud">
+            {remainingLabel && <p className="timer">Time left: {remainingLabel}</p>}
+            {remainingMs === 0 && <p className="timesup">Time's up!</p>}
+            <p className="score">Score: {score}</p>
+          </div>
 
       
 
@@ -255,41 +258,43 @@ function App() {
           {grid.length === 0 || !gameStarted ? (
             <p>Loading round...</p>
           ) : (
-            <div
-              className="grid"
-              style={{
-                gridTemplateColumns: `repeat(${size}, 1fr)`,
-                "--cell-font-size": `${cellFontPx}px`,
-              }}
-            >
-              {grid.map((row, r) =>
-                row.map((colour, c) => {
-                  const key = `${r}-${c}`;
-                  const flashClass = (flash && flash.key === key) ? (flash.type === 'correct' ? 'flash-correct' : 'flash-wrong') : '';
-                  return (
-                    <button
-                      key={key}
-                      className={`cell ${flashClass}`}
-                      style={{ backgroundColor: colour }}
-                      disabled={remainingMs === 0 || isPaused}
-                      onClick={() => {
-                        console.log(`Clicked ${colour} at row ${r}, col ${c}`);
-                        if (remainingMs > 0 && target && !isPaused) {
-                          const isCorrect = r === target.row && colour === target.colour;
-                          setFlash({ key, type: isCorrect ? 'correct' : 'wrong' });
-                          setTimeout(() => setFlash(null), 200);
-                          if (isCorrect) {
-                            setScore((s) => s + 1);
-                            fetchRound(true);
+            <div className="grid-panel">
+              <div
+                className="grid"
+                style={{
+                  gridTemplateColumns: `repeat(${size}, 1fr)`,
+                  "--cell-font-size": `${cellFontPx}px`,
+                }}
+              >
+                {grid.map((row, r) =>
+                  row.map((colour, c) => {
+                    const key = `${r}-${c}`;
+                    const flashClass = (flash && flash.key === key) ? (flash.type === 'correct' ? 'flash-correct' : 'flash-wrong') : '';
+                    return (
+                      <button
+                        key={key}
+                        className={`cell ${flashClass}`}
+                        style={{ backgroundColor: colour }}
+                        disabled={remainingMs === 0 || isPaused}
+                        onClick={() => {
+                          console.log(`Clicked ${colour} at row ${r}, col ${c}`);
+                          if (remainingMs > 0 && target && !isPaused) {
+                            const isCorrect = r === target.row && colour === target.colour;
+                            setFlash({ key, type: isCorrect ? 'correct' : 'wrong' });
+                            setTimeout(() => setFlash(null), 200);
+                            if (isCorrect) {
+                              setScore((s) => s + 1);
+                              fetchRound(true);
+                            }
                           }
-                        }
-                      }}
-                    >
-                      {r + 1}
-                    </button>
-                  );
-                })
-              )}
+                        }}
+                      >
+                        {r + 1}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
         </section>

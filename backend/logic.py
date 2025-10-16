@@ -21,19 +21,32 @@ def generate_latin_square(colours: List[str]) -> List[List[str]]:
     """Generate an N×N Latin-square grid from the given colours.
 
     - N is inferred from the number of colours provided.
-    - Uses a shuffled base row and cyclic shifts to ensure each colour
-      appears exactly once per row and once per column.
+    - Build a canonical Latin square with values (i + j) % N, then apply
+      random permutations to rows, columns, and symbols so the result
+      stays Latin but looks more randomized (no obvious diagonals).
     """
     n = len(colours)
     if n == 0:
         return []
 
-    base = colours[:]
-    random.shuffle(base)
+    # Base Latin square of indices 0..n-1
+    base_idx = [[(i + j) % n for j in range(n)] for i in range(n)]
 
+    # Random permutations
+    row_perm = list(range(n))
+    col_perm = list(range(n))
+    sym_perm = list(range(n))
+    random.shuffle(row_perm)
+    random.shuffle(col_perm)
+    random.shuffle(sym_perm)
+
+    # Apply permutations and map indices to colour strings
     grid: List[List[str]] = []
     for i in range(n):
-        row = base[i:] + base[:i]
+        row: List[str] = []
+        for j in range(n):
+            idx = base_idx[row_perm[i]][col_perm[j]]
+            row.append(colours[sym_perm[idx]])
         grid.append(row)
     return grid
 

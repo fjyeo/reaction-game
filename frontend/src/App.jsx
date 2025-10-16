@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "./App.css";
 
 function App() {
@@ -7,6 +7,7 @@ function App() {
   const [target, setTarget] = useState(null);
   const [roundId, setRoundId] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
+  const [remainingMs, setRemainingMs] = useState(null);
 
   // fetch the round from backend on mount
   useEffect(() => {
@@ -22,9 +23,45 @@ function App() {
       .catch((err) => console.error("Failed to fetch round:", err));
   }, []);
 
+  // countdown: derive remaining time from expiresAt
+  useEffect(() => {
+    if (!expiresAt) {
+      setRemainingMs(null);
+      return;
+    }
+    const endTs = Date.parse(expiresAt);
+    if (Number.isNaN(endTs)) {
+      setRemainingMs(null);
+      return;
+    }
+
+    const tick = () => {
+      const now = Date.now();
+      const ms = Math.max(0, endTs - now);
+      setRemainingMs(ms);
+    };
+
+    // initial tick then interval
+    tick();
+    const id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [expiresAt]);
+
+  // format remaining time as mm:ss
+  const remainingLabel = useMemo(() => {
+    if (remainingMs == null) return null;
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const mm = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const ss = String(totalSeconds % 60).padStart(2, "0");
+    return `${mm}:${ss}`;
+  }, [remainingMs]);
+
   return (
     <main className="app">
       <h1>Reaction Game</h1>
+
+      {/* Countdown timer */}
+      {remainingLabel && <p className="timer">Time left: {remainingLabel}</p>}
 
       {/* Prompt and metadata */}
       {target && (

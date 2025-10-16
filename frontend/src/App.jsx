@@ -9,7 +9,6 @@ function App() {
   const [expiresAt, setExpiresAt] = useState(null);
   const [remainingMs, setRemainingMs] = useState(null);
   const [score, setScore] = useState(0);
-  const [clicksByColour, setClicksByColour] = useState({});
 
   // fetch a round from backend
   const fetchRound = (preserveExpiry = true) => {
@@ -81,20 +80,29 @@ function App() {
 
       {/* Actions */}
       <p>
-        <button className="new-round" onClick={() => fetchRound(true)} disabled={remainingMs === 0}>New Round</button>
+        <button
+          className="new-round"
+          onClick={() => {
+            if (remainingMs === 0) {
+              // Start a fresh game: reset score and expiry
+              setScore(0);
+              fetchRound(false);
+            } else {
+              // Mid-game: fetch next round but keep original expiry
+              fetchRound(true);
+            }
+          }}
+        >
+          New Round
+        </button>
       </p>
 
       {/* Prompt and metadata */}
       {target && (
         <p className="prompt">Target: click {targetColourLabel} {target.row + 1}</p>
       )}
-      {/* Scoreboard */}
+      {/* Score */}
       <p className="score">Score: {score}</p>
-      {Object.keys(clicksByColour).length > 0 && (
-        <p className="clicks">
-          Clicks by colour: {Object.entries(clicksByColour).map(([k, v]) => `${k}: ${v}`).join(" · ")}
-        </p>
-      )}
       {roundId && <p className="meta">Round ID: {roundId}</p>}
 
       {/* If grid is still empty, show a loading message */}
@@ -110,8 +118,6 @@ function App() {
                 style={{ backgroundColor: colour }}
                 disabled={remainingMs === 0}
                 onClick={() => {
-                  // Track per-colour clicks
-                  setClicksByColour((prev) => ({ ...prev, [colour]: (prev[colour] || 0) + 1 }));
                   console.log(`Clicked ${colour} at row ${r}, col ${c}`);
                   // If time remains and target matches, increment score and fetch next round
                   if (remainingMs > 0 && target && r === target.row && colour === target.colour) {

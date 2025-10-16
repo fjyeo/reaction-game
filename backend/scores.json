@@ -6,6 +6,12 @@
     "timestamp": "2025-10-16T18:51:33.395506+00:00"
   },
   {
+    "id": "05c7b2fbcb574ab492b32bda4eb25c0b",
+    "name": "Player",
+    "score": 11,
+    "timestamp": "2025-10-16T19:08:03.994981+00:00"
+  },
+  {
     "id": "d6cf4b4080b148eaacaf7a9b5030298a",
     "name": "Player",
     "score": 9,
@@ -22,11 +28,5 @@
     "name": "Player",
     "score": 0,
     "timestamp": "2025-10-16T15:47:58.024939+00:00"
-  },
-  {
-    "id": "6ce99f34e94b463b8f97a48558bb935d",
-    "name": "Player",
-    "score": 0,
-    "timestamp": "2025-10-16T15:49:41.400219+00:00"
   }
 ]

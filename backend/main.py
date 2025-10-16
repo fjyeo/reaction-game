@@ -15,21 +15,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-COLOURS = ["red", "green", "blue"]
+# Up to 9 distinct, CSS-safe colours for N×N boards (3 ≤ N ≤ 9)
+PALETTE = [
+    "red",
+    "green",
+    "blue",
+    "yellow",
+    "purple",
+    "orange",
+    "cyan",
+    "magenta",
+    "lime",
+]
 
 
 @app.get("/grid")
-def get_grid():
-    """Return a 3×3 Latin-square colour grid."""
-    grid = generate_latin_square(COLOURS)
+def get_grid(size: int = Query(3, ge=3, le=9)):
+    """Return an N×N Latin-square colour grid (3 ≤ N ≤ 9)."""
+    colours = PALETTE[:size]
+    grid = generate_latin_square(colours)
     return {"grid": grid}
 
 
 @app.get("/round")
-def get_round():
-    """Return a round payload with grid, target, roundId, and expiresAt."""
+def get_round(size: int = Query(3, ge=3, le=9)):
+    """Return a round payload with grid, target, roundId, and expiresAt for given size."""
     # 60 seconds is a sensible default aligned with upcoming timer work
-    return create_round(colours=COLOURS, duration_s=60)
+    colours = PALETTE[:size]
+    return create_round(colours=colours, duration_s=60)
 
 
 @app.get("/")

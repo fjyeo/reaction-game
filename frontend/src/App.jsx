@@ -12,10 +12,11 @@ function App() {
   const [submitted, setSubmitted] = useState(false);
   const [highscores, setHighscores] = useState([]);
   const hasTimeBeenPositiveRef = useRef(false);
+  const [size, setSize] = useState(3);
 
   // fetch a round from backend
   const fetchRound = (preserveExpiry = true) => {
-    fetch("http://127.0.0.1:8000/round")
+    fetch(`http://127.0.0.1:8000/round?size=${size}`)
       .then((res) => res.json())
       .then((data) => {
         console.log("Round from backend:", data);
@@ -40,6 +41,14 @@ function App() {
     fetchRound();
     fetchHighscores();
   }, []);
+
+  // when size changes, start a fresh game with the new board size
+  useEffect(() => {
+    setScore(0);
+    setSubmitted(false);
+    hasTimeBeenPositiveRef.current = false;
+    fetchRound(false);
+  }, [size]);
 
   // countdown: derive remaining time from expiresAt
   useEffect(() => {
@@ -141,6 +150,21 @@ function App() {
         </button>
       </p>
 
+      {/* Board size selector */}
+      <p>
+        Size:
+        <select
+          value={size}
+          onChange={(e) => setSize(parseInt(e.target.value, 10))}
+        >
+          {[3, 4, 5, 6, 7, 8, 9].map((n) => (
+            <option key={n} value={n}>
+              {n}×{n}
+            </option>
+          ))}
+        </select>
+      </p>
+
       {/* Prompt and metadata */}
       {target && (
         <p className="prompt">Target: click {targetColourLabel} {target.row + 1}</p>
@@ -154,7 +178,7 @@ function App() {
         <ol>
           {highscores.map((e) => (
             <li key={e.id}>
-              {e.name} — {e.score}
+              {e.name} - {e.score}
             </li>
           ))}
         </ol>
@@ -165,7 +189,13 @@ function App() {
       {grid.length === 0 ? (
         <p>Loading round...</p>
       ) : (
-        <div className="grid">
+        <div
+          className="grid"
+          style={{
+            gridTemplateColumns: `repeat(${size}, 100px)`,
+            gridTemplateRows: `repeat(${size}, 100px)`,
+          }}
+        >
           {grid.map((row, r) =>
             row.map((colour, c) => (
               <button
@@ -193,4 +223,6 @@ function App() {
 }
 
 export default App;
+
+
 

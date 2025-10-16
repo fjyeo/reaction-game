@@ -42,7 +42,10 @@ API Endpoints
 
 GET /grid
 
-Returns a 3×3 grid of colours (Latin square format).
+Returns an N×N grid of colours (Latin square format). N is between 3 and 9.
+
+Query params:
+- size: integer (3..9), default 3
 
 Example response:
 
@@ -145,6 +148,9 @@ Additional Endpoint
 GET /round
 
 Returns a full round payload that includes a grid, a randomly selected target cell, a unique roundId, and an expiresAt timestamp (ISO 8601, UTC). The default expiry is 60 seconds from the time of request.
+
+Query params:
+- size: integer (3..9), default 3
 
 Example response:
 

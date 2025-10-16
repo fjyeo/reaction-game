@@ -61,6 +61,13 @@ function App() {
     return `${mm}:${ss}`;
   }, [remainingMs]);
 
+  // Capitalised colour for prompt (e.g., "Green")
+  const targetColourLabel = useMemo(() => {
+    if (!target || !target.colour) return null;
+    const s = String(target.colour);
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }, [target]);
+
   return (
     <main className="app">
       <h1>Reaction Game</h1>
@@ -76,9 +83,7 @@ function App() {
 
       {/* Prompt and metadata */}
       {target && (
-        <p className="prompt">
-          Target: click {target.colour} at row {target.row + 1}, col {target.col + 1}
-        </p>
+        <p className="prompt">Target: click {targetColourLabel} {target.row + 1}</p>
       )}
       {roundId && <p className="meta">Round ID: {roundId}</p>}
 
@@ -97,7 +102,7 @@ function App() {
                   console.log(`Clicked ${colour} at row ${r}, col ${c}`)
                 }
               >
-                {colour}
+                {r + 1}
               </button>
             ))
           )}

@@ -5,7 +5,6 @@ function App() {
   // store round data from backend
   const [grid, setGrid] = useState([]);
   const [target, setTarget] = useState(null);
-  const [roundId, setRoundId] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
   const [remainingMs, setRemainingMs] = useState(null);
   const [score, setScore] = useState(0);
@@ -27,7 +26,7 @@ function App() {
         console.log("Round from backend:", data);
         setGrid(data.grid || []);
         setTarget(data.target || null);
-        setRoundId(data.roundId || null);
+        // no longer tracking roundId in UI
         // Preserve the original game expiry across rounds unless explicitly allowed to reset
         setExpiresAt((prev) => (preserveExpiry && prev ? prev : data.expiresAt || null));
       })
@@ -251,7 +250,6 @@ function App() {
       <p className="score">Score: {score}</p>
 
       {/* Highscores moved to sidebar */}
-      {roundId && <p className="meta">Round ID: {roundId}</p>}
 
       {/* If grid is still empty, show a loading message */}
           {grid.length === 0 || !gameStarted ? (

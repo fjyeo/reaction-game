@@ -13,6 +13,9 @@ function App() {
   const [highscores, setHighscores] = useState([]);
   const hasTimeBeenPositiveRef = useRef(false);
   const [size, setSize] = useState(3);
+  const [isPaused, setIsPaused] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [frozenRemainingMs, setFrozenRemainingMs] = useState(null);
   const [playerName, setPlayerName] = useState("");
   const [flash, setFlash] = useState(null);
 
@@ -38,26 +41,37 @@ function App() {
       .catch((e) => console.error("Failed to fetch highscores:", e));
   };
 
-  // fetch round + highscores on mount
+  // fetch highscores on mount (do not auto-start game)
   useEffect(() => {
-    fetchRound();
     fetchHighscores();
   }, []);
 
-  // when size changes, start a fresh game with the new board size
+  // when size changes during an active game, start a fresh game with the new board size
   useEffect(() => {
+    if (!gameStarted) return; // do not auto-start on first load
     setScore(0);
     setSubmitted(false);
     hasTimeBeenPositiveRef.current = false;
     fetchRound(false);
-  }, [size]);
+  }, [size, gameStarted]);
 
-  // countdown: derive remaining time from expiresAt
+  // countdown: derive remaining time from expiresAt, freeze when paused, and stop when not started
   useEffect(() => {
+    if (!gameStarted) {
+      setRemainingMs(null);
+      return;
+    }
     if (!expiresAt) {
       setRemainingMs(null);
       return;
     }
+
+    if (isPaused) {
+      // keep showing frozen time while paused
+      if (frozenRemainingMs != null) setRemainingMs(frozenRemainingMs);
+      return;
+    }
+
     const endTs = Date.parse(expiresAt);
     if (Number.isNaN(endTs)) {
       setRemainingMs(null);
@@ -70,11 +84,10 @@ function App() {
       setRemainingMs(ms);
     };
 
-    // initial tick then interval
     tick();
     const id = setInterval(tick, 250);
     return () => clearInterval(id);
-  }, [expiresAt]);
+  }, [expiresAt, isPaused, frozenRemainingMs, gameStarted]);
 
   // format remaining time as mm:ss
   const remainingLabel = useMemo(() => {
@@ -165,18 +178,62 @@ function App() {
                   ))}
                 </select>
               </label>
-              <button
-                className="new-round"
-                onClick={() => {
-                  setScore(0);
-                  setSubmitted(false);
-                  hasTimeBeenPositiveRef.current = false;
-                  fetchRound(false);
-                  fetchHighscores();
-                }}
-              >
-                New Round
-              </button>
+              {!gameStarted ? (
+                <button
+                  className="new-round"
+                  onClick={() => {
+                    // Start a fresh game
+                    setGameStarted(true);
+                    setIsPaused(false);
+                    setFrozenRemainingMs(null);
+                    setScore(0);
+                    setSubmitted(false);
+                    hasTimeBeenPositiveRef.current = false;
+                    fetchRound(false);
+                    fetchHighscores();
+                  }}
+                >
+                  Start
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      if (!isPaused) {
+                        // Pause: freeze remaining time
+                        setFrozenRemainingMs(remainingMs);
+                        setIsPaused(true);
+                      } else {
+                        // Resume: recompute new deadline from frozen time
+                        const ms = frozenRemainingMs ?? remainingMs ?? 0;
+                        const newExpiry = new Date(Date.now() + ms).toISOString();
+                        setIsPaused(false);
+                        setFrozenRemainingMs(null);
+                        // Set new expiry to continue countdown from where it left off
+                        setExpiresAt(newExpiry);
+                      }
+                    }}
+                  >
+                    {isPaused ? "Resume" : "Pause"}
+                  </button>
+                  <button
+                    className="new-round"
+                    onClick={() => {
+                      // Restart a fresh game
+                      setGameStarted(true);
+                      setIsPaused(false);
+                      setFrozenRemainingMs(null);
+                      setScore(0);
+                      setSubmitted(false);
+                      hasTimeBeenPositiveRef.current = false;
+                      fetchRound(false);
+                      fetchHighscores();
+                    }}
+                  >
+                    New Game
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -197,7 +254,7 @@ function App() {
       {roundId && <p className="meta">Round ID: {roundId}</p>}
 
       {/* If grid is still empty, show a loading message */}
-          {grid.length === 0 ? (
+          {grid.length === 0 || !gameStarted ? (
             <p>Loading round...</p>
           ) : (
             <div
@@ -210,33 +267,33 @@ function App() {
               {grid.map((row, r) =>
                 row.map((colour, c) => {
                   const key = `${r}-${c}`;
-              const flashClass = (flash && flash.key === key) ? (flash.type === 'correct' ? 'flash-correct' : 'flash-wrong') : '';
-              return (
-                <button
-                  key={key}
-                  className={`cell ${flashClass}`}
-                  style={{ backgroundColor: colour }}
-                  disabled={remainingMs === 0}
-                  onClick={() => {
-                    console.log(`Clicked ${colour} at row ${r}, col ${c}`);
-                    if (remainingMs > 0 && target) {
-                      const isCorrect = r === target.row && colour === target.colour;
-                      setFlash({ key, type: isCorrect ? 'correct' : 'wrong' });
-                      setTimeout(() => setFlash(null), 200);
-                      if (isCorrect) {
-                        setScore((s) => s + 1);
-                        fetchRound(true);
-                      }
-                    }
-                  }}
-                >
-                  {r + 1}
-                </button>
-              );
-            })
+                  const flashClass = (flash && flash.key === key) ? (flash.type === 'correct' ? 'flash-correct' : 'flash-wrong') : '';
+                  return (
+                    <button
+                      key={key}
+                      className={`cell ${flashClass}`}
+                      style={{ backgroundColor: colour }}
+                      disabled={remainingMs === 0 || isPaused}
+                      onClick={() => {
+                        console.log(`Clicked ${colour} at row ${r}, col ${c}`);
+                        if (remainingMs > 0 && target && !isPaused) {
+                          const isCorrect = r === target.row && colour === target.colour;
+                          setFlash({ key, type: isCorrect ? 'correct' : 'wrong' });
+                          setTimeout(() => setFlash(null), 200);
+                          if (isCorrect) {
+                            setScore((s) => s + 1);
+                            fetchRound(true);
+                          }
+                        }
+                      }}
+                    >
+                      {r + 1}
+                    </button>
+                  );
+                })
+              )}
+            </div>
           )}
-        </div>
-      )}
         </section>
         <aside className="sidebar">
           <h2>High Scores</h2>

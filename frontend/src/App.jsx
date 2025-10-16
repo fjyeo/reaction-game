@@ -17,6 +17,8 @@ function App() {
   const [frozenRemainingMs, setFrozenRemainingMs] = useState(null);
   const [playerName, setPlayerName] = useState("");
   const [flash, setFlash] = useState(null);
+  const [totalDurationMs, setTotalDurationMs] = useState(null);
+  const [progressKey, setProgressKey] = useState(0);
 
   // fetch a round from backend
   const fetchRound = (preserveExpiry = true) => {
@@ -51,6 +53,8 @@ function App() {
     setScore(0);
     setSubmitted(false);
     hasTimeBeenPositiveRef.current = false;
+    setTotalDurationMs(60 * 1000);
+    setProgressKey((k) => k + 1);
     fetchRound(false);
   }, [size, gameStarted]);
 
@@ -188,6 +192,8 @@ function App() {
                     setScore(0);
                     setSubmitted(false);
                     hasTimeBeenPositiveRef.current = false;
+                    setTotalDurationMs(60 * 1000);
+                    setProgressKey((k) => k + 1);
                     fetchRound(false);
                     fetchHighscores();
                   }}
@@ -225,6 +231,8 @@ function App() {
                       setScore(0);
                       setSubmitted(false);
                       hasTimeBeenPositiveRef.current = false;
+                      setTotalDurationMs(60 * 1000);
+                      setProgressKey((k) => k + 1);
                       fetchRound(false);
                       fetchHighscores();
                     }}
@@ -236,11 +244,28 @@ function App() {
             </div>
           </div>
 
-          {/* Countdown + Score */}
+          {/* Countdown + Score + Progress */}
           <div className="hud">
-            {remainingLabel && <p className="timer">Time left: {remainingLabel}</p>}
-            {remainingMs === 0 && <p className="timesup">Time's up!</p>}
-            <p className="score">Score: {score}</p>
+            <div className="hud-row">
+              {remainingLabel && <p className="timer">Time left: {remainingLabel}</p>}
+              {remainingMs === 0 && <p className="timesup">Time's up!</p>}
+              <p className="score">Score: {score}</p>
+            </div>
+            {gameStarted && totalDurationMs != null && remainingMs != null && (
+              <div className="progress" aria-label="Time remaining">
+                <div
+                  key={progressKey}
+                  className="progress-fill"
+                  style={{
+                    animationName: 'progress-deplete',
+                    animationDuration: `${totalDurationMs}ms`,
+                    animationTimingFunction: 'linear',
+                    animationFillMode: 'forwards',
+                    animationPlayState: isPaused ? 'paused' : 'running',
+                  }}
+                />
+              </div>
+            )}
           </div>
 
       

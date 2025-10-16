@@ -249,7 +249,7 @@ function App() {
             <div className="hud-row">
               {remainingLabel && <p className="timer">Time left: {remainingLabel}</p>}
               {remainingMs === 0 && <p className="timesup">Time's up!</p>}
-              <p className="score">Score: {score}</p>
+              <p className="score-big">Score: {score}</p>
             </div>
             {gameStarted && totalDurationMs != null && remainingMs != null && (
               <div className="progress" aria-label="Time remaining">
@@ -272,10 +272,11 @@ function App() {
 
       {/* Prompt and metadata */}
       {target && (
-        <p className="prompt">Target: click {targetColourLabel} {target.row + 1}</p>
+        <p className="prompt" aria-live="polite">
+          Target: click <span className="target-badge">{targetColourLabel}</span>
+          <span className="row-badge">{target.row + 1}</span>
+        </p>
       )}
-      {/* Score */}
-      <p className="score">Score: {score}</p>
 
       {/* Highscores moved to sidebar */}
 

@@ -83,14 +83,10 @@ function App() {
         <button
           className="new-round"
           onClick={() => {
-            if (remainingMs === 0) {
-              // Start a fresh game: reset score and expiry
-              setScore(0);
-              fetchRound(false);
-            } else {
-              // Mid-game: fetch next round but keep original expiry
-              fetchRound(true);
-            }
+            // Always start a fresh game on New Round:
+            // reset score and get a new expiry/timebox
+            setScore(0);
+            fetchRound(false);
           }}
         >
           New Round

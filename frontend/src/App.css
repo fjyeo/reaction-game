@@ -78,7 +78,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: var(--cell-font-size, 1.1rem);
   font-weight: 600;
   aspect-ratio: 1 / 1; /* perfect squares */
   transition: transform 100ms ease, box-shadow 100ms ease;

@@ -89,6 +89,57 @@ Next Steps
 
     Add unit tests for colour generation logic
 
+Scores & Leaderboard
+
+POST /score
+
+Records a score attempt.
+
+Body (JSON):
+
+{
+  "name": "Alice",
+  "score": 7
+}
+
+Response:
+
+{
+  "ok": true,
+  "entry": {"id": "...", "name": "Alice", "score": 7, "timestamp": "2025-01-01T12:00:00+00:00"}
+}
+
+GET /highscores?limit=5
+
+Returns the top five scores sorted by score (descending), then by timestamp.
+The backend stores at most the top 5 entries and always returns up to 5.
+The response is a JSON array of entries:
+
+[
+  {"id": "...", "name": "Alice", "score": 9, "timestamp": "..."},
+  {"id": "...", "name": "Bob",   "score": 7, "timestamp": "..."}
+]
+
+Notes
+
+- Scores are stored in a local JSON file `backend/scores.json`.
+- The store retains only the Top 5 entries at any time.
+- This is suitable for local development and coursework submission.
+- For concurrent multi-user scenarios, a database (e.g. SQLite) is recommended.
+
+DELETE /score/{id}
+
+Deletes a score entry by its id.
+
+Response (on success):
+
+{
+  "ok": true,
+  "id": "<id>"
+}
+
+If the id does not exist, returns 404.
+
 Additional Endpoint
 
 GET /round

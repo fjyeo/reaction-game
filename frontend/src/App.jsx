@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import "./App.css";
 
 function App() {
@@ -9,6 +9,9 @@ function App() {
   const [expiresAt, setExpiresAt] = useState(null);
   const [remainingMs, setRemainingMs] = useState(null);
   const [score, setScore] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
+  const [highscores, setHighscores] = useState([]);
+  const hasTimeBeenPositiveRef = useRef(false);
 
   // fetch a round from backend
   const fetchRound = (preserveExpiry = true) => {
@@ -25,9 +28,17 @@ function App() {
       .catch((err) => console.error("Failed to fetch round:", err));
   };
 
-  // fetch on mount
+  const fetchHighscores = () => {
+    fetch("http://127.0.0.1:8000/highscores?limit=5")
+      .then((res) => res.json())
+      .then((hs) => setHighscores(Array.isArray(hs) ? hs : []))
+      .catch((e) => console.error("Failed to fetch highscores:", e));
+  };
+
+  // fetch round + highscores on mount
   useEffect(() => {
     fetchRound();
+    fetchHighscores();
   }, []);
 
   // countdown: derive remaining time from expiresAt
@@ -70,6 +81,40 @@ function App() {
     return s.charAt(0).toUpperCase() + s.slice(1);
   }, [target]);
 
+  // Submit final score exactly once when time transitions from >0 to 0
+  useEffect(() => {
+    if (remainingMs == null) return;
+
+    if (remainingMs > 0) {
+      hasTimeBeenPositiveRef.current = true;
+      return;
+    }
+
+    const armed = hasTimeBeenPositiveRef.current;
+    if (remainingMs === 0 && armed && !submitted) {
+      hasTimeBeenPositiveRef.current = false; // disarm for this game
+
+      const playerName = localStorage.getItem("rg_player_name") || "Player";
+
+      (async () => {
+        try {
+          const res = await fetch("http://127.0.0.1:8000/score", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: playerName, score }),
+          });
+          await res.json();
+        } catch (e) {
+          console.error("Failed to submit score:", e);
+        } finally {
+          setSubmitted(true);
+        }
+
+      fetchHighscores();
+      })();
+    }
+  }, [remainingMs, submitted, score]);
+
   return (
     <main className="app">
       <h1>Reaction Game</h1>
@@ -86,7 +131,10 @@ function App() {
             // Always start a fresh game on New Round:
             // reset score and get a new expiry/timebox
             setScore(0);
+            setSubmitted(false);
+            hasTimeBeenPositiveRef.current = false;
             fetchRound(false);
+            fetchHighscores();
           }}
         >
           New Round
@@ -99,6 +147,18 @@ function App() {
       )}
       {/* Score */}
       <p className="score">Score: {score}</p>
+
+      {/* Highscores (always visible) */}
+      <div className="highscores">
+        <h2>High Scores</h2>
+        <ol>
+          {highscores.map((e) => (
+            <li key={e.id}>
+              {e.name} — {e.score}
+            </li>
+          ))}
+        </ol>
+      </div>
       {roundId && <p className="meta">Round ID: {roundId}</p>}
 
       {/* If grid is still empty, show a loading message */}

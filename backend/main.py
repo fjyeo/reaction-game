@@ -55,12 +55,14 @@ def home():
 class ScoreSubmission(BaseModel):
     name: str = Field(..., min_length=1, max_length=20)
     score: int = Field(..., ge=0)
+    size: int = Field(..., ge=3, le=9)
 
 
 class ScoreEntry(BaseModel):
     id: str
     name: str
     score: int
+    size: int
     timestamp: str
 
 
@@ -68,19 +70,20 @@ class ScoreEntry(BaseModel):
 def post_score(payload: ScoreSubmission):
     """Record a score attempt. Returns the stored entry.
 
-    Body: { name: string (1..20), score: non-negative integer }
+    Body: { name: string (1..20), score: non-negative integer, size: int (3..9) }
     """
     name = payload.name.strip()
-    entry = add_score(name=name, score=payload.score)
+    entry = add_score(name=name, score=payload.score, size=payload.size)
     return {"ok": True, "entry": entry}
 
 
 @app.get("/highscores", response_model=List[ScoreEntry])
-def get_highscores(limit: int = Query(5, ge=1, le=5)):
-    """Return the top scores sorted by score desc, then timestamp asc."""
+def get_highscores(limit: int = Query(5, ge=1, le=5), size: int = Query(3, ge=3, le=9)):
+    """Return the top scores for a given board size, sorted by score desc then timestamp asc."""
     scores = load_scores()
-    # scores are already stored sorted desc by score; enforce and slice defensively
-    scores_sorted = sorted(scores, key=lambda e: (-int(e.get("score", 0)), e.get("timestamp", "")))
+    filtered = [s for s in scores if int(s.get("size", 3)) == size]
+    # scores are already stored sorted desc by score within a size; enforce and slice defensively
+    scores_sorted = sorted(filtered, key=lambda e: (-int(e.get("score", 0)), e.get("timestamp", "")))
     return [ScoreEntry(**s) for s in scores_sorted[:limit]]
 
 
@@ -91,4 +94,3 @@ def delete_score(score_id: str):
     if not ok:
         raise HTTPException(status_code=404, detail="Score not found")
     return {"ok": True, "id": score_id}
-
